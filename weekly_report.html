@@ -1,0 +1,363 @@
+import React, { useState, useMemo } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { TrendingUp, Ship, ShieldAlert, Globe, Factory, ChevronRight, BarChart3, Info } from 'lucide-react';
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Данные из Таблицы 1 отчета
+  const priceData = [
+    { date: '07.02', palm: 4153, sunflower: 1290, rapeseed: 1303, soy: 1219 },
+    { date: '10.02', palm: 4061, sunflower: 1292, rapeseed: 1308, soy: 1262 },
+    { date: '13.02', palm: 4001, sunflower: 1295, rapeseed: 1316, soy: 1258 },
+    { date: '16.02', palm: 4050, sunflower: 1285, rapeseed: 1324, soy: 1258 },
+    { date: '17.02', palm: null, sunflower: 1285, rapeseed: 1325, soy: 1264 },
+  ];
+
+  const StatCard = ({ title, value, change, icon: Icon, color }) => (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+      <div className="flex justify-between items-start mb-4">
+        <div className={`p-3 rounded-lg ${color}`}>
+          <Icon size={24} className="text-white" />
+        </div>
+        {change && (
+          <span className={`text-sm font-medium ${change.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {change}
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="text-slate-500 text-sm font-medium">{title}</p>
+        <h3 className="text-2xl font-bold text-slate-800 mt-1">{value}</h3>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+      {/* Header */}
+      <header className="bg-slate-900 text-white p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="bg-amber-500 text-slate-900 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Аналитика 2026</span>
+                <span className="text-slate-400 text-sm">Отчетный период: 9–15 февраля</span>
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight">Рынок растительных масел и жиров</h1>
+              <p className="text-slate-400 mt-2">Европа, Центральная Азия и Кавказ</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="text-right hidden md:block border-l border-slate-700 pl-6">
+                <p className="text-xs text-slate-500 uppercase">Статус рынка</p>
+                <p className="text-emerald-400 font-semibold">Стабилизация (мягкие масла)</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Navigation */}
+      <nav className="sticky top-0 z-10 bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 overflow-x-auto">
+          <div className="flex space-x-8 h-14 items-center">
+            {[
+              { id: 'overview', label: 'Обзор цен', icon: TrendingUp },
+              { id: 'production', label: 'Производство', icon: Factory },
+              { id: 'logistics', label: 'Логистика', icon: Ship },
+              { id: 'regulation', label: 'Регуляция', icon: ShieldAlert },
+              { id: 'forecast', label: 'Прогнозы', icon: Globe },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-1 h-full whitespace-nowrap border-b-2 transition-all font-medium text-sm ${
+                  activeTab === tab.id 
+                    ? 'border-amber-500 text-amber-600' 
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <tab.icon size={18} />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto p-4 md:p-8">
+        {activeTab === 'overview' && (
+          <div className="space-y-8">
+            {/* Quick Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <StatCard title="Подсолнечное масло" value="$1,285" change="-10$" icon={TrendingUp} color="bg-blue-500" />
+              <StatCard title="Рапсовое масло" value="$1,324.8" change="+$21.3" icon={TrendingUp} color="bg-emerald-500" />
+              <StatCard title="Пальмовое масло (BMD)" value="4,050 MYR" change="-2.4%" icon={BarChart3} color="bg-orange-500" />
+              <StatCard title="Соевое масло (CBOT)" value="$1,264" change="+3.7%" icon={TrendingUp} color="bg-indigo-500" />
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Chart */}
+              <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-lg font-bold">Динамика цен (USD/т)</h3>
+                  <div className="flex gap-2 text-xs">
+                    <span className="flex items-center gap-1"><div className="w-3 h-3 bg-emerald-500 rounded-full"></div> Рапс</span>
+                    <span className="flex items-center gap-1"><div className="w-3 h-3 bg-blue-500 rounded-full"></div> Подсолнечник</span>
+                  </div>
+                </div>
+                <div className="h-80 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={priceData}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                      <YAxis domain={[1200, 1350]} axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                      <Tooltip contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} />
+                      <Legend verticalAlign="top" height={36}/>
+                      <Line type="monotone" name="Подсолнечное (FOB ЧМ)" dataKey="sunflower" stroke="#3b82f6" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                      <Line type="monotone" name="Рапсовое (FOB EC)" dataKey="rapeseed" stroke="#10b981" strokeWidth={3} dot={{r: 4}} activeDot={{r: 6}} />
+                      <Line type="monotone" name="Соевое (CBOT)" dataKey="soy" stroke="#6366f1" strokeWidth={2} strokeDasharray="5 5" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Summary Side Card */}
+              <div className="bg-amber-50 p-6 rounded-xl border border-amber-100">
+                <h3 className="text-amber-900 font-bold mb-4 flex items-center gap-2">
+                  <Info size={20} /> Анализ недели
+                </h3>
+                <div className="space-y-4">
+                  <div className="p-4 bg-white rounded-lg shadow-sm">
+                    <p className="text-sm font-bold text-slate-800">Рапсовое масло</p>
+                    <p className="text-xs text-slate-600 mt-1">Достигло максимума месяца из-за цен на MATIF (492 EUR/т) и мандатов RED III.</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg shadow-sm">
+                    <p className="text-sm font-bold text-slate-800">Пальмовое масло</p>
+                    <p className="text-xs text-slate-600 mt-1">Волатильность после POC 2026. Запасы в Малайзии упали на 7.7%, что является точкой перегиба.</p>
+                  </div>
+                  <div className="p-4 bg-white rounded-lg shadow-sm">
+                    <p className="text-sm font-bold text-slate-800">Подсолнечное масло</p>
+                    <p className="text-xs text-slate-600 mt-1">Незначительная коррекция вниз ($1285), но сохраняется дефицит сырья в портах Украины.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'production' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Globe className="text-amber-500" /> Казахстан: Модернизация
+              </h3>
+              <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                  <div className="bg-amber-100 p-4 rounded-full text-amber-600 font-bold">40</div>
+                  <div>
+                    <p className="font-bold">Проектов в пищевой промышленности</p>
+                    <p className="text-sm text-slate-500">10 заводов по переработке масличных уже внедряются.</p>
+                  </div>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg border-l-4 border-amber-500">
+                  <p className="text-sm text-slate-600 italic">"Цель — достичь $1 млрд экспортной выручки к 2028 году и войти в ТОП-3 мировых экспортеров."</p>
+                </div>
+                <div className="pt-4 border-t border-slate-100">
+                  <div className="flex justify-between items-end mb-2">
+                    <span className="text-sm text-slate-500">Запасы подсолнечника</span>
+                    <span className="text-lg font-bold text-emerald-600">+38%</span>
+                  </div>
+                  <p className="text-2xl font-bold text-slate-800">2.11 млн тонн</p>
+                  <p className="text-xs text-slate-400">На 1 января 2026 года</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <TrendingUp className="text-blue-500" /> Узбекистан: Импорт и Инфляция
+              </h3>
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-blue-50 rounded-xl">
+                    <p className="text-xs text-blue-600 uppercase font-bold">Инфляция</p>
+                    <p className="text-2xl font-bold text-blue-900">7.2%</p>
+                    <p className="text-xs text-blue-500">Январь 2026</p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-xl">
+                    <p className="text-xs text-emerald-600 uppercase font-bold">Импорт масел</p>
+                    <p className="text-2xl font-bold text-emerald-900">$387.5М</p>
+                    <p className="text-xs text-emerald-500">Итоги 2025</p>
+                  </div>
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Узбекистан остается рынком №1 для казахстанского подсолнечного масла (46% экспорта). 
+                  Однако рост цен заставляет кондитеров переходить на <strong>пальмовый олеин</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'logistics' && (
+          <div className="space-y-8">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100 overflow-hidden relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 -mr-16 -mt-16 rounded-full"></div>
+              <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+                <Ship className="text-blue-600" /> Транспортные коридоры и риски
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="bg-emerald-100 p-2 rounded text-emerald-600 mt-1">
+                      <ChevronRight size={16} />
+                    </div>
+                    <div>
+                      <p className="font-bold">Срединный коридор (TITR)</p>
+                      <p className="text-sm text-slate-600 mt-1">
+                        Ускорение поставок из Китая в Азербайджан (Сиань-Баку) до <strong>11–16 дней</strong> (было 17–25).
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="bg-rose-100 p-2 rounded text-rose-600 mt-1">
+                      <ShieldAlert size={16} />
+                    </div>
+                    <div>
+                      <p className="font-bold">Черноморские риски</p>
+                      <p className="text-sm text-slate-600 mt-1">
+                        Страхование судов на уровне 1% от стоимости из-за атак в районе портов Одессы. Это удерживает высокие цены CIF India.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-slate-900 p-6 rounded-xl text-white">
+                  <h4 className="text-amber-400 font-bold mb-4 uppercase text-xs tracking-widest">Логистическая карта</h4>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+                      <span>Сиань - Баку</span>
+                      <span className="font-mono text-emerald-400">11-16 дней</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm border-b border-slate-800 pb-2">
+                      <span>Одесса - Мумбаи</span>
+                      <span className="font-mono text-amber-400">Риски (CIF India ↑)</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Ормузский пролив</span>
+                      <span className="font-mono text-rose-400 underline">В зоне внимания</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'regulation' && (
+          <div className="space-y-6">
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-blue-600 text-white p-2 rounded-lg">EU</div>
+                <h3 className="text-xl font-bold">EUDR: Техническая пауза</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-1 uppercase">Срок действия</p>
+                  <p className="font-bold">С 16 февраля 2026</p>
+                  <p className="text-sm text-slate-600 mt-1">Режим "Только чтение" информационной системы.</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-1 uppercase">Причина</p>
+                  <p className="font-bold">Внедрение RED III</p>
+                  <p className="text-sm text-slate-600 mt-1">Обновление положений и упрощений для операторов.</p>
+                </div>
+                <div className="p-4 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-slate-500 mb-1 uppercase">Дедлайн</p>
+                  <p className="font-bold">30 декабря 2026</p>
+                  <p className="text-sm text-slate-600 mt-1">Запуск системы в полном объеме.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-slate-100">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-red-600 text-white p-2 rounded-lg">RU</div>
+                <h3 className="text-xl font-bold">РФ: Экспортные пошлины (Февраль)</h3>
+              </div>
+              <div className="flex flex-col md:flex-row gap-8 items-center">
+                <div className="flex-1 space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-red-50 rounded-lg">
+                    <span className="font-medium">Подсолнечное масло</span>
+                    <span className="font-bold text-red-700">9 495 ₽/т (+2.1%)</span>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-emerald-50 rounded-lg">
+                    <span className="font-medium">Подсолнечный шрот</span>
+                    <span className="font-bold text-emerald-700">0 ₽/т</span>
+                  </div>
+                </div>
+                <div className="md:w-1/3 text-sm text-slate-500">
+                  <p className="italic underline decoration-amber-300 underline-offset-4">
+                    Нулевая пошлина на шрот стимулирует глубокую переработку сырья внутри страны.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'forecast' && (
+          <div className="space-y-8">
+            <div className="bg-indigo-900 text-white p-8 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-2 mb-6">
+                <div className="bg-indigo-700 px-3 py-1 rounded text-xs font-bold uppercase tracking-widest">POC 2026 Куала-Лумпур</div>
+              </div>
+              <h3 className="text-3xl font-bold mb-8">Итоги и прогнозы</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div className="bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+                  <h4 className="text-amber-400 font-bold text-lg mb-3">Ценовой коридор</h4>
+                  <p className="text-2xl font-mono font-bold">3,800 – 4,300</p>
+                  <p className="text-indigo-200 text-sm mt-1 uppercase tracking-tighter">MYR/т для пальмового масла</p>
+                  <p className="text-xs text-indigo-300 mt-4 leading-relaxed italic">
+                    Прогноз Томаса Мильке и Дораба Мистри до конца 2 кв. 2026.
+                  </p>
+                </div>
+
+                <div className="bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+                  <h4 className="text-amber-400 font-bold text-lg mb-3">Биотопливо</h4>
+                  <p className="text-2xl font-bold">Мандат B50</p>
+                  <p className="text-indigo-200 text-sm mt-1 uppercase tracking-tighter">Перенос на конец 2026 года</p>
+                  <p className="text-xs text-indigo-300 mt-4 leading-relaxed">
+                    Индонезия сохраняет мандат B45, что несколько ослабило текущее давление на рынок.
+                  </p>
+                </div>
+
+                <div className="bg-white/10 p-6 rounded-xl backdrop-blur-sm border border-white/10">
+                  <h4 className="text-amber-400 font-bold text-lg mb-3">Конкуренция</h4>
+                  <p className="text-2xl font-bold">Потеря доли</p>
+                  <p className="text-indigo-200 text-sm mt-1 uppercase tracking-tighter">В Китае и Индии</p>
+                  <p className="text-xs text-indigo-300 mt-4 leading-relaxed">
+                    Пальмовое масло уступает подсолнечному и соевому в пищевом сегменте из-за агрессивных цен последних.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* Footer */}
+      <footer className="max-w-7xl mx-auto p-8 border-t border-slate-200 mt-12 flex flex-col md:flex-row justify-between items-center gap-4 text-slate-400 text-sm">
+        <p>© 2026 Аналитическая группа по рынку масел и жиров</p>
+        <div className="flex gap-6">
+          <a href="#" className="hover:text-slate-600 transition-colors">Методология</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Архив отчетов</a>
+          <a href="#" className="hover:text-slate-600 transition-colors">Конференция POC</a>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
